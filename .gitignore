@@ -40,5 +40,11 @@ Desktop.ini
 # TypeScript
 *.tsbuildinfo
 
-# Local push helpers
-push-batch-*.json
+# Local push/export helpers (never commit)
+push-*.json
+mcp-*.json
+_export_*
+_push_*
+_single_*
+_mcp_*
+payload*.json
