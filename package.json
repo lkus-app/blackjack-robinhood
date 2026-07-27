@@ -1,0 +1,23 @@
+{
+  "name": "blackjack-robinhood",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "BlackJack — 2D GameFi blackjack (offline MVP) ready for Vercel",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "phaser": "^3.87.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.7.2",
+    "vite": "^6.0.0"
+  }
+}
