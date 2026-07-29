@@ -515,6 +515,9 @@ export class GameScene extends Phaser.Scene {
     this.helpContainer?.destroy(true);
     this.helpContainer = null;
   }
+  /** Card display size — use scale-based sizing so flip tweens stay consistent in prod */
+  private readonly CARD_SCALE = 0.85;
+
   private flyCard(card: CardData, who: 'player' | 'dealer', index: number, faceDown: boolean): Promise<void> {
     return new Promise((resolve) => {
       const origin = who === 'player' ? this.playerCardOrigin : this.dealerCardOrigin;
@@ -524,16 +527,17 @@ export class GameScene extends Phaser.Scene {
       const faceKey = `card-${card.suit}-${card.rank}`;
       const startKey = this.textures.exists('card-back') ? 'card-back' : faceKey;
       const img = this.add.image(this.shoePos.x, this.shoePos.y, startKey);
-      img.setDisplaySize(CARD_WIDTH * 0.85, CARD_HEIGHT * 0.85).setDepth(20 + index).setAngle(-20);
+      // Prefer setScale over setDisplaySize so scaleX flip works the same in dev + production
+      img.setScale(this.CARD_SCALE).setDepth(20 + index).setAngle(-18);
       list.push(img);
-      const midX = (this.shoePos.x + tx) / 2;
-      const midY = Math.min(this.shoePos.y, ty) - 80;
+      const midX = (this.shoePos.x + tx) / 2 + Phaser.Math.Between(-12, 12);
+      const midY = Math.min(this.shoePos.y, ty) - 70;
       this.tweens.add({
         targets: img,
         x: midX,
         y: midY,
-        angle: 10,
-        duration: 180,
+        angle: 8,
+        duration: 200,
         ease: 'Cubic.easeOut',
         onComplete: () => {
           this.tweens.add({
@@ -541,36 +545,48 @@ export class GameScene extends Phaser.Scene {
             x: tx,
             y: ty,
             angle: 0,
-            duration: 220,
+            duration: 240,
             ease: 'Cubic.easeIn',
             onComplete: () => {
-              if (!faceDown) this.flipCard(img, faceKey).then(resolve);
-              else resolve();
+              // Soft land bounce (Y only — does not break flip scale)
+              this.tweens.add({
+                targets: img,
+                y: ty - 6,
+                duration: 70,
+                yoyo: true,
+                ease: 'Quad.easeOut',
+                onComplete: () => {
+                  if (!faceDown) this.flipCard(img, faceKey).then(resolve);
+                  else resolve();
+                },
+              });
             },
           });
         },
       });
     });
   }
+
   private flipCard(img: Phaser.GameObjects.Image, faceKey: string): Promise<void> {
     return new Promise((resolve) => {
       const texKey = this.textures.exists(faceKey) ? faceKey : 'card-back';
+      const s = this.CARD_SCALE;
+      // Flip via scaleX only (never mix with setDisplaySize mid-tween)
       this.tweens.add({
         targets: img,
-        scaleX: 0.01,
-        duration: 120,
-        ease: 'Quad.easeIn',
+        scaleX: 0.02,
+        duration: 110,
+        ease: 'Sine.easeIn',
         onComplete: () => {
           img.setTexture(texKey);
-          img.setDisplaySize(CARD_WIDTH * 0.85, CARD_HEIGHT * 0.85);
-          img.setScale(0.01, 1);
+          img.setScale(0.02, s);
           this.tweens.add({
             targets: img,
-            scaleX: 1,
-            duration: 120,
-            ease: 'Quad.easeOut',
+            scaleX: s,
+            duration: 130,
+            ease: 'Sine.easeOut',
             onComplete: () => {
-              img.setDisplaySize(CARD_WIDTH * 0.85, CARD_HEIGHT * 0.85);
+              img.setScale(s);
               resolve();
             },
           });
